@@ -1,0 +1,43 @@
+# Where Antoinette's show looks for stories.
+#
+# Each line:   Section | Source name | Feed URL | options
+#
+# Sections (in the order the show plays them):
+#   Australian politics, Environment & climate, Nature, Design
+# or "any": a broad feed; the AI decides whether a story fits one of the
+# sections above and ignores everything else.
+#
+# Options (optional):
+#   gnews   the feed is a Google News search (for sites that block GitHub);
+#           tidies the " - Source" off the end of headlines
+#
+# All of these are free to read. To remove a source, put # at the start of
+# its line. To add one, copy a line and change the URL.
+
+# ---- Australian politics ----
+Australian politics | ABC News | https://www.abc.net.au/news/feed/104217372/rss.xml
+Australian politics | The Guardian | https://www.theguardian.com/australia-news/australian-politics/rss
+Australian politics | The Conversation | https://theconversation.com/au/politics/articles.atom
+Australian politics | Pearls and Irritations | https://pearlsandirritations.com/feed
+# Michael West Media blocks GitHub, so it comes via Google News
+Australian politics | Michael West Media | https://news.google.com/rss/search?q=site:michaelwest.com.au+when:2d&hl=en-AU&gl=AU&ceid=AU:en | gnews
+
+# ---- Environment & climate ----
+Environment & climate | RenewEconomy | https://reneweconomy.com.au/feed/
+Environment & climate | The Guardian | https://www.theguardian.com/au/environment/rss
+Environment & climate | The Guardian (climate crisis) | https://www.theguardian.com/environment/climate-crisis/rss
+Environment & climate | ABC News (climate) | https://www.abc.net.au/news/feed/1450/rss.xml
+Environment & climate | The Conversation | https://theconversation.com/au/environment/articles.atom
+
+# ---- Nature ----
+Nature | The Guardian (wildlife) | https://www.theguardian.com/environment/wildlife/rss
+
+# ---- Design ----
+Design | The Guardian (design) | https://www.theguardian.com/artanddesign/design/rss
+Design | The Guardian (architecture) | https://www.theguardian.com/artanddesign/architecture/rss
+
+# ---- Broad feeds: the AI keeps only stories that fit a section ----
+any | Al Jazeera | https://www.aljazeera.com/xml/rss/all.xml
+any | ABC News | https://www.abc.net.au/news/feed/10719976/rss.xml
+any | The Guardian | https://www.theguardian.com/australia-news/rss
+any | The Conversation | https://theconversation.com/au/articles.atom

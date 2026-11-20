@@ -1,0 +1,95 @@
+name: Antoinette's show (daily episode)
+
+on:
+  schedule:
+    # GitHub runs on UTC. 18:15 UTC = 5:15 am in Sydney during daylight saving
+    # (October to April) and 4:15 am in winter, so the episode is ready well
+    # before 6:30 even if GitHub starts the run late.
+    - cron: "15 18 * * *"
+  workflow_dispatch:      # adds a "Run workflow" button (works in the GitHub app)
+    inputs:
+      test:
+        description: "Test run: email only you, and don't mark stories as used"
+        type: boolean
+        default: true
+      publish:
+        description: "Put this episode in the podcast feed"
+        type: boolean
+        default: true
+
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+
+concurrency:
+  group: briefing
+
+jobs:
+  episode:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+
+      - name: Install
+        run: |
+          pip install feedparser requests trafilatura mutagen
+          which ffmpeg || (sudo apt-get update && sudo apt-get install -y ffmpeg)
+
+      - name: Make today's episode
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          GOOGLE_TTS_KEY: ${{ secrets.GOOGLE_TTS_KEY }}
+          EMAIL_FROM: ${{ secrets.EMAIL_FROM }}
+          APP_PASSWORD: ${{ secrets.APP_PASSWORD }}
+          BRIEFING_TO: ${{ secrets.BRIEFING_TO }}
+          VOICE: ${{ vars.VOICE }}
+          SITE_URL: https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/
+        run: |
+          ARGS=""
+          if [ "${{ inputs.test }}" = "true" ]; then ARGS="--test"; fi
+          if [ "${{ inputs.publish }}" = "false" ]; then ARGS="$ARGS --no-publish"; fi
+          python briefing.py $ARGS
+
+      - name: Keep the script and audio with this run
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: episode
+          path: out/
+          retention-days: 7
+          if-no-files-found: ignore
+
+      - name: Package the podcast site
+        if: github.event_name == 'schedule' || inputs.publish
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: site
+
+      - name: Remember which stories were used
+        if: inputs.test != true
+        run: |
+          git config user.name "antoinettes-show"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add state
+          if ! git diff --cached --quiet; then
+            git commit -m "Remember today's stories [skip ci]"
+            git pull --rebase
+            git push
+          fi
+
+  publish:
+    needs: episode
+    if: github.event_name == 'schedule' || inputs.publish
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy.outputs.page_url }}
+    steps:
+      - id: deploy
+        uses: actions/deploy-pages@v4
