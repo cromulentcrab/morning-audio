@@ -29,6 +29,8 @@ jobs:
   episode:
     runs-on: ubuntu-latest
     timeout-minutes: 25
+    outputs:
+      site: ${{ steps.check.outputs.site }}
     steps:
       - uses: actions/checkout@v5
 
@@ -65,8 +67,12 @@ jobs:
           retention-days: 7
           if-no-files-found: ignore
 
+      - name: Check for a new episode to publish
+        id: check
+        run: if [ -f site/feed.xml ]; then echo "site=yes" >> "$GITHUB_OUTPUT"; fi
+
       - name: Package the podcast site
-        if: github.event_name == 'schedule' || inputs.publish
+        if: steps.check.outputs.site == 'yes'
         uses: actions/upload-pages-artifact@v3
         with:
           path: site
@@ -85,7 +91,7 @@ jobs:
 
   publish:
     needs: episode
-    if: github.event_name == 'schedule' || inputs.publish
+    if: needs.episode.outputs.site == 'yes'
     runs-on: ubuntu-latest
     environment:
       name: github-pages

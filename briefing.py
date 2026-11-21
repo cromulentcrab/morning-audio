@@ -72,6 +72,9 @@ DEFAULT_VOICE = "en-AU-Chirp3-HD-Aoede"
 FALLBACK_VOICE = "en-AU-Neural2-C"   # used only if the first voice is refused
 SPEAKING_RATE = 1.0          # 0.9 = a little slower, 1.1 = a little faster
 GAP_SECONDS = 1.1            # pause between stories
+# Scheduled runs are skipped before this date (Sydney time). Leave as "" for no pause.
+# Manual runs from the Actions tab still work while paused.
+PAUSED_UNTIL = "2026-11-27"
 
 MAX_HOURS_BACK = 30
 MAX_PER_FEED = 15
@@ -657,6 +660,10 @@ def main():
     args = ap.parse_args()
 
     now = datetime.now(SYDNEY)
+    if (PAUSED_UNTIL and os.environ.get("GITHUB_EVENT_NAME") == "schedule"
+            and now.date().isoformat() < PAUSED_UNTIL):
+        log(f"Paused until {PAUSED_UNTIL}; no episode or email today.")
+        return
     out = Path(args.out)
     out.mkdir(exist_ok=True)
     state = load_state()
